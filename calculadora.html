@@ -1,0 +1,252 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        
+        .calculadora {
+            background-color: #333;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            width: 300px;
+            padding: 20px;
+        }
+        
+        .pantalla {
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            padding: 15px;
+            text-align: right;
+            font-size: 28px;
+            font-weight: bold;
+            height: 50px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .botones {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-gap: 10px;
+        }
+        
+        button {
+            padding: 15px;
+            font-size: 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        button:hover {
+            opacity: 0.8;
+        }
+        
+        button:active {
+            transform: scale(0.95);
+        }
+        
+        .numero {
+            background-color: #4a4a4a;
+            color: white;
+        }
+        
+        .operacion {
+            background-color: #f8a100;
+            color: white;
+        }
+        
+        .funcion {
+            background-color: #8e8e8e;
+            color: white;
+        }
+        
+        .igual {
+            background-color: #5fb878;
+            color: white;
+        }
+        
+        #borrar-todo {
+            background-color: #ff6b6b;
+            color: white;
+        }
+        
+        .grid-2 {
+            grid-column: span 2;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculadora">
+        <div class="pantalla" id="pantalla">0</div>
+        <div class="botones">
+            <button id="borrar-todo" class="funcion">AC</button>
+            <button id="borrar-ultimo" class="funcion">⌫</button>
+            <button id="cambiar-signo" class="funcion">±</button>
+            <button class="operacion" value="/">÷</button>
+            
+            <button class="numero" value="7">7</button>
+            <button class="numero" value="8">8</button>
+            <button class="numero" value="9">9</button>
+            <button class="operacion" value="*">×</button>
+            
+            <button class="numero" value="4">4</button>
+            <button class="numero" value="5">5</button>
+            <button class="numero" value="6">6</button>
+            <button class="operacion" value="-">−</button>
+            
+            <button class="numero" value="1">1</button>
+            <button class="numero" value="2">2</button>
+            <button class="numero" value="3">3</button>
+            <button class="operacion" value="+">+</button>
+            
+            <button class="numero grid-2" value="0">0</button>
+            <button class="numero" value=".">.</button>
+            <button id="igual" class="igual">=</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const pantalla = document.getElementById('pantalla');
+            const numeros = document.querySelectorAll('.numero');
+            const operaciones = document.querySelectorAll('.operacion');
+            const igual = document.getElementById('igual');
+            const borrarTodo = document.getElementById('borrar-todo');
+            const borrarUltimo = document.getElementById('borrar-ultimo');
+            const cambiarSigno = document.getElementById('cambiar-signo');
+            
+            let valorActual = '0';
+            let operacionPendiente = null;
+            let valorAnterior = null;
+            let reiniciarPantalla = false;
+            
+            // Función para actualizar la pantalla
+            function actualizarPantalla() {
+                pantalla.textContent = valorActual;
+            }
+            
+            // Manejo de números
+            numeros.forEach(function(boton) {
+                boton.addEventListener('click', function() {
+                    const valorBoton = boton.value;
+                    
+                    if (reiniciarPantalla) {
+                        valorActual = '0';
+                        reiniciarPantalla = false;
+                    }
+                    
+                    // Si es un punto decimal y ya hay uno, no hacer nada
+                    if (valorBoton === '.' && valorActual.includes('.')) {
+                        return;
+                    }
+                    
+                    // Si el valor actual es 0, reemplazo a menos que sea punto decimal
+                    if (valorActual === '0' && valorBoton !== '.') {
+                        valorActual = valorBoton;
+                    } else {
+                        valorActual += valorBoton;
+                    }
+                    
+                    actualizarPantalla();
+                });
+            });
+            
+            // Manejo de operaciones
+            operaciones.forEach(function(boton) {
+                boton.addEventListener('click', function() {
+                    // Si hay una operación pendiente, calcular primero
+                    if (operacionPendiente !== null) {
+                        calcular();
+                    }
+                    
+                    valorAnterior = valorActual;
+                    operacionPendiente = boton.value;
+                    reiniciarPantalla = true;
+                });
+            });
+            
+            // Función para realizar cálculos
+            function calcular() {
+                if (operacionPendiente === null || valorAnterior === null) {
+                    return;
+                }
+                
+                const anterior = parseFloat(valorAnterior);
+                const actual = parseFloat(valorActual);
+                let resultado;
+                
+                switch (operacionPendiente) {
+                    case '+':
+                        resultado = anterior + actual;
+                        break;
+                    case '-':
+                        resultado = anterior - actual;
+                        break;
+                    case '*':
+                        resultado = anterior * actual;
+                        break;
+                    case '/':
+                        resultado = anterior / actual;
+                        break;
+                    default:
+                        return;
+                }
+                
+                // Manejo para evitar errores de punto flotante
+                valorActual = Number(resultado.toFixed(10)).toString();
+                operacionPendiente = null;
+                valorAnterior = null;
+                actualizarPantalla();
+            }
+            
+            // Botón igual
+            igual.addEventListener('click', function() {
+                calcular();
+                reiniciarPantalla = true;
+            });
+            
+            // Borrar todo
+            borrarTodo.addEventListener('click', function() {
+                valorActual = '0';
+                operacionPendiente = null;
+                valorAnterior = null;
+                actualizarPantalla();
+            });
+            
+            // Borrar último dígito
+            borrarUltimo.addEventListener('click', function() {
+                if (valorActual.length > 1) {
+                    valorActual = valorActual.slice(0, -1);
+                } else {
+                    valorActual = '0';
+                }
+                actualizarPantalla();
+            });
+            
+            // Cambiar signo
+            cambiarSigno.addEventListener('click', function() {
+                valorActual = (parseFloat(valorActual) * -1).toString();
+                actualizarPantalla();
+            });
+            
+            // Inicializar pantalla
+            actualizarPantalla();
+        });
+    </script>
+</body>
+</html>
